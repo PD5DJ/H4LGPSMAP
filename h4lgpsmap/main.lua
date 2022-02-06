@@ -20,7 +20,7 @@
 -------------------------------------------------------------------------------------------------------------------
 -- Set up of variables used in whole scope
 -------------------------------------------------------------------------------------------------------------------
-local Version           = "v1.03"
+local Version           = "v1.04"
 local Title             = "Hobby4Life - GPS Map"
 local translations      = {en="H4L GPS Map"}
 local mapImage                  -- Global use of map image
@@ -879,11 +879,11 @@ end
 
 
 -------------------------------------------------------------------------------------------------------------------
--- Checks if valid GPS values are available otherwise display No Signal
+-- Checks if valid GPS source is available or values are available otherwise display No Signal
 -------------------------------------------------------------------------------------------------------------------
 local function CheckGPS(widget)
     local lcd_width, lcd_height = lcd.getWindowSize()  
-    if widget.GPSSource == nil or widget.GPSLAT < -90 or widget.GPSLAT > 90 or widget.GPSLONG < -180 or widget.GPSLONG > 180 then
+    if widget.GPSSource == nil or widget.GPSSource:state() == false or widget.GPSLAT < -90 or widget.GPSLAT > 90 or widget.GPSLONG < -180 or widget.GPSLONG > 180 then
       lcd.font(FONT_XXL)
       DrawAlertBox(widget,"NO GPS SIGNAL", WHITE, lcd.RGB(255,0,0,0.4))
       Draw_LCD = false
