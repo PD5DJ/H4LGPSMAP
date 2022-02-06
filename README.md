@@ -19,7 +19,17 @@ Hobby4life has created it's own version of a ETHOS GPS Map widget, with some ext
 
 Copy the **h4lgpsmap** folder with all its content to the folder **/scripts** on your **SD card**.
 
+The only files that have to be edited by user are:
 
+**/scripts/h4lgpsmap/maps/mapnames.lua**
+
+And
+
+**/scripts/h4lgpsmap/maps/map1.lua**
+
+through
+
+**/scripts/h4lgpsmap/maps/map8.lua**
 
 
 
