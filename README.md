@@ -5,6 +5,8 @@
 
 Hobby4life has created it's own version of a ETHOS GPS Map widget, with some extra features.
 
+This widget can be used with ETHOS v1.1.0 and higher, and is compatible with Horus X10/X12 and Tandem X20
+
 
 
 ![](h4lgpsmap.png)
@@ -35,7 +37,10 @@ through
 
 ## Configuration:
 
-For using this widget turn off the Title of the widget.
+For using this widget
+
+1. Select a fullscreen widget
+2. Turn off the Title of the widget.
 
 ### Select Map:
 
