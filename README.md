@@ -7,6 +7,16 @@ Hobby4life has created it's own version of a ETHOS GPS Map widget, with some ext
 
 This widget can be used with ETHOS v1.1.0 and higher, and is compatible with Horus X10/X12 and Tandem X20
 
+------
+
+#### Changes:
+
+###### v1.04
+
+- First release
+
+------
+
 
 
 ![](h4lgpsmap.png)
