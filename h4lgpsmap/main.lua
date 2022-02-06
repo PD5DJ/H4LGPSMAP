@@ -20,24 +20,24 @@
 -------------------------------------------------------------------------------------------------------------------
 -- Set up of variables used in whole scope
 -------------------------------------------------------------------------------------------------------------------
-local Version = "v1.03"
-local Title = "Hobby4Life - GPS Map"
-local translations = {en="H4L GPS Map"}
-local mapImage                    -- Global use of map image
-local Windsock                    -- Global use of windsock image
-local ForceHome = false           -- Global Flag to Force Homing
-local HomeSet = false             -- Global Flag if Home is set or not
-local RadioInfo = {}
-local Draw_LCD = false            -- Flag used in functions that have draw functions
-local DMSLatString = ""           -- Global DMS Latitude string
-local DMSLongString = ""          -- Global DMS Longitude string
-local Heading_Previous = 0        -- Stores a global valid heading value used in drawArrow()
-local TempLat =0 --52             -- Default Compare Latitude, used in drawArrow()
-local TempLong = 0 --5            -- Default Compare Latitude, used in drawArrow()
-local LCD_Type                    -- 0 = X10/12, 1 = X20
-local Map_change                  -- Flag used when a map is changed
-local Run_Script = false          -- Used to control the whole paint loop
-local Bearing = 0                 -- Global Bearing variable
+local Version           = "v1.03"
+local Title             = "Hobby4Life - GPS Map"
+local translations      = {en="H4L GPS Map"}
+local mapImage                  -- Global use of map image
+local Windsock                  -- Global use of windsock image
+local ForceHome         = false -- Global Flag to Force Homing
+local HomeSet           = false -- Global Flag if Home is set or not
+local RadioInfo         = {}  
+local Draw_LCD          = false -- Flag used in functions that have draw functions
+local DMSLatString      = ""    -- Global DMS Latitude string
+local DMSLongString     = ""    -- Global DMS Longitude string
+local Heading_Previous  = 0     -- Stores a global valid heading value used in drawArrow()
+local TempLat           = 0     -- Default Compare Latitude, used in drawArrow()
+local TempLong          = 0     -- Default Compare Latitude, used in drawArrow()
+local LCD_Type                  -- 0 = X10/12, 1 = X20
+local Map_change                -- Flag used when a map is changed
+local Run_Script        = false -- Used to control the whole paint loop
+local Bearing           = 0     -- Global Bearing variable
 
 local function name(widget)
     local locale = system.getLocale()
@@ -252,7 +252,7 @@ local function drawBargraph(x,y, size,invert,background,gradient,color,value,min
       Xpos4 = (12 * size) - (9 * size) 
       Xpos5 = (12 * size) - (12 * size) 
     else 
-       Xpos1 = 0 * size 
+      Xpos1 = 0 * size 
       Xpos2 = 3 * size 
       Xpos3 = 6 * size 
       Xpos4 = 9 * size 
