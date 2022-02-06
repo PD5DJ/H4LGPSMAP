@@ -7,11 +7,11 @@ Hobby4life has created it's own version of a ETHOS GPS Map widget, with some ext
 
 
 
-![h4lgpsmap](F:\Dropbox\--- GITHUB ---\H4LGPSMAP\h4lgpsmap.png)
+![](h4lgpsmap.png)
+
+![h4lgpsmap01](h4lgpsmap01.png)
 
 
-
-![h4lgpsmap01](F:\Dropbox\--- GITHUB ---\H4LGPSMAP\h4lgpsmap01.png)
 
 
 
