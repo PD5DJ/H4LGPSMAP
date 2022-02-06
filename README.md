@@ -1,5 +1,5 @@
 # H4LGPSMAP
- Hobb4life ETHOS GPS Map Widget
+ Hobby4life ETHOS GPS Map Widget
 
 ------
 
