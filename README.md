@@ -11,7 +11,7 @@ This widget can be used with ETHOS v1.1.0 and higher, and is compatible with Hor
 
 #### Changes:
 
-###### v1.04
+###### v1.03
 
 - First release
 
