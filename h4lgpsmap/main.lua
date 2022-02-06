@@ -955,9 +955,13 @@ local function wakeup(widget)
     if widget.GPSSource then
       local LatValue = widget.GPSSource:value(OPTION_LATITUDE)
       local LongValue = widget.GPSSource:value(OPTION_LONGITUDE)
+      local GPSState = widget.GPSSource:state()
       if widget.GPSLAT ~= LatValue or widget.GPSLONG ~= LongValue then
         widget.GPSLAT = LatValue
         widget.GPSLONG = LongValue
+        lcd.invalidate()
+      end
+      if GPSState == false then
         lcd.invalidate()
       end
     end
@@ -998,8 +1002,12 @@ local function wakeup(widget)
    
     if widget.RSSISource then
       local RSSIValue = widget.RSSISource:value()
+      local RSSIState = widget.RSSISource:state()
       if widget.RSSI ~= RSSIValue then
         widget.RSSI = RSSIValue
+        lcd.invalidate()
+      end
+      if RSSIState == false then
         lcd.invalidate()
       end
     end      
