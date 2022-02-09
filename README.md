@@ -11,6 +11,18 @@ This widget can be used with ETHOS v1.1.0 and higher, and is compatible with Hor
 
 #### Changes:
 
+###### v1.05
+
+- Map measurement indicator moved
+- LOS (Line of Sight) readout added in bottom box
+- Ground Distance readout added in bottom box
+- Measurement readout improved.. now switches from m to km, and foot to miles. for Altitude and Distance readouts.
+- Overal readout display positions changed
+- Stick GPS Simulation added
+  - This will enable GPS simulator, 2 sticks are needed to simulate Latitude & Longitude, midstick is center of map.
+
+- Default maps are changed, Amsterdam map as default map1.lua
+
 ###### v1.04
 
 - No GPS selected detection fixed

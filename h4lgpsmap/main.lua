@@ -20,7 +20,7 @@
 -------------------------------------------------------------------------------------------------------------------
 -- Set up of variables used in whole scope
 -------------------------------------------------------------------------------------------------------------------
-local Version           = "v1.04"
+local Version           = "v1.05"
 local Title             = "Hobby4Life - GPS Map"
 local translations      = {en="H4L GPS Map"}
 local mapImage                  -- Global use of map image
@@ -67,16 +67,20 @@ local function create()
             MapNorth=0,MapSouth=0,MapWest=0,MapEast=0,
             LatValue=0,LongValue=0,
             PlaneVisible = false,
-            ArrowColor = lcd.RGB(0, 255, 0),
-            HUD_Text_Color = lcd.RGB(255, 255, 255),
-            Distance_Text_Color = lcd.RGB(0, 0, 0),
-            LineColor = lcd.RGB(0, 0, 0),
+            ArrowColor = lcd.RGB(0,255,0),
+            HUD_Text_Color = lcd.RGB(255,255,255),
+            Distance_Text_Color = lcd.RGB(0,255,190),
+            LineColor = lcd.RGB(0,255,190),
             NS="",EW="", FM="", SPD="",
             LCD_Type, --800x480(x20) or 480x272(x10/x12)
             TX_VOLTAGE = 0,
             Map_Select = 0,
             unit = 0,           -- 0 = Metric, 1 = Imperial
             GPS_Annotation = 0, -- 0 = DMS, 1 = Decimal
+            Distance = 0,
+            StickSim = false,   -- True = Stick GPS simulation on, False = off
+            LatSource=0,LongSource=0, -- Input values for Stick GPS Simulation
+            LatValue=0,LongValue=0,   -- Input values for Stick GPS Simulation
             }
 end
 
@@ -425,6 +429,61 @@ end
 
 
 
+-------------------------------------------------------------------------------------------------------------------
+-- Function to get North, South, East, West indicators
+-------------------------------------------------------------------------------------------------------------------
+local function GetNSEW(widget)
+    if widget.GPSLAT > 0 then
+      widget.NS = "N"
+    else
+     widget.NS = "S"
+    end
+
+    if widget.GPSLONG > 0 then
+      widget.EW = "E"
+    else
+      widget.EW = "W"
+    end
+end
+
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------
+-- Function to create formatted strings of values + units
+-------------------------------------------------------------------------------------------------------------------
+local function FormatValueString(widget,value)
+  local unit
+  if value > 999999 then
+    if widget.unit == 1 then
+      unit= "mi"
+      value = string.format("%.0f",(value / 5280))
+    else
+      unit = "km"
+      value = string.format("%.0f",(value / 1000))
+    end      
+  elseif value > 999 then
+    if widget.unit == 1 then
+      unit= "mi"
+      value = string.format("%.1f",(value / 5280))
+    else
+      unit = "km"
+      value = string.format("%.1f",(value / 1000))
+    end  
+  else
+    if widget.unit == 1 then
+      unit= "ft"
+      value = string.format("%.0f",value)
+    else
+      value = string.format("%.0f",value)
+      unit = "m"
+    end  
+  end
+  return value, unit
+end
+
+
 
 
 -------------------------------------------------------------------------------------------------------------------
@@ -495,8 +554,8 @@ local function BuildDMSstr(widget)
     -- Converts the gps coordinates to Degrees,Minutes,Seconds
     local LatD,LatM,LatS = dec2deg(widget,widget.GPSLAT)
     local LongD,LongM,LongS = dec2deg(widget,widget.GPSLONG)
-    DMSLatString  = widget.NS..LatD.."°"..LatM.."'"..string.format("%.2f",LatS)..'"'
-    DMSLongString = widget.EW..LongD.."°"..LongM.."'"..string.format("%.2f",LongS)..'"'
+    DMSLatString  = LatD.."°"..LatM.."'"..string.format("%.1f",LatS)..widget.NS
+    DMSLongString = LongD.."°"..LongM.."'"..string.format("%.1f",LongS)..widget.EW
 end
 
 
@@ -570,33 +629,11 @@ local function DrawHUD(widget)
   if Draw_LCD then
     local lcd_width, lcd_height = lcd.getWindowSize()  
 
-  
-    if widget.GPSLAT > 0 then
-      widget.NS = "N"
-    else
-     widget.NS = "S"
-    end
-
-    if widget.GPSLONG > 0 then
-      widget.EW = "E"
-    else
-      widget.EW = "W"
-    end
-    
-    if widget.unit == 1 then
-      widget.FM = "ft"
-      widget.SPD = "mph"
-    else
-      widget.FM = "m"
-      widget.SPD = "Km/h"
-    end
-    
-    
     lcd.pen(SOLID)
     --Setup display layout
     lcd.color(lcd.RGB(128,128,128,0.8)) -- 80% Opacity
  
-    local Ya,Yb,Yc,Xa,Xaa,Xb,Xbb,Xc,Xcc,Title_X,Title_Y,TX_Voltage_X,TX_Voltage_Y,RSSI_X,RSSI_Y,TX_Voltage_Bar_X,TX_Voltage_Bar_Y,RSSI_Bar_X,RSSI_Bar_Y,Map_Distance
+    local Ya,Yb,Yc,Xa,Xaa,Xb,Xbb,Xc,Xcc,Xd,Xdd,Title_X,Title_Y,TX_Voltage_X,TX_Voltage_Y,RSSI_X,RSSI_Y,TX_Voltage_Bar_X,TX_Voltage_Bar_Y,RSSI_Bar_X,RSSI_Bar_Y,Map_Distance,Value,Unit,DistanceBar_X,DistanceBar_Y,DistanceBar_Text_X,DistanceBar_Text_Y
     
     if LCD_Type == 0 then --X10/12
       TX_Voltage_X      = 2
@@ -613,18 +650,29 @@ local function DrawHUD(widget)
       
       Bar_Size          = 1.2
             
-      Xa                = 2
-      Xaa               = 45
-      Xb                = 150
-      Xbb               = 210
-      Xc                = 285
-      Xcc               = 340
+      Xa                = 42
+      Xaa               = Xa + 5
+      Xb                = 190
+      Xbb               = Xb + 5
+      Xc                = 320
+      Xcc               = Xc + 5
+      Xd                = 425
+      Xdd               = Xd + 5
       
       Ya                = 238
       Yb                = 254
       
+      DistanceBar_X = 355
+      DistanceBar_Y = 227      
+      DistanceBar_Text_X = 422     
+      DistanceBar_Text_Y = 221
+      
+      
       lcd.drawFilledRectangle(0,0,480,16)
-      lcd.drawFilledRectangle(0,238,480,34)       
+      lcd.drawFilledRectangle(0,238,480,34)  
+      lcd.drawFilledRectangle(410,222,70,14)  
+      
+      
 
     elseif LCD_Type == 1 then -- X20
       TX_Voltage_X      = 5
@@ -641,18 +689,26 @@ local function DrawHUD(widget)
       
       Bar_Size          = 2
             
-      Xa                = 5
-      Xaa               = 75
-      Xb                = 260
-      Xbb               = 355
-      Xc                = 500
-      Xcc               = 590
+      Xa                = 70
+      Xaa               = Xa + 10
+      Xb                = 310
+      Xbb               = Xb + 10
+      Xc                = 520
+      Xcc               = Xc + 10
+      Xd                = 710
+      Xdd               = Xd + 10
       
       Ya                = 422
       Yb                = 450
       
+      DistanceBar_X = 600
+      DistanceBar_Y = 402  
+      DistanceBar_Text_X = 710
+      DistanceBar_Text_Y = 392
+      
       lcd.drawFilledRectangle(0,0,800,24)
       lcd.drawFilledRectangle(0,420,800,60)      
+      lcd.drawFilledRectangle(695,392,105,24)  
       
     end
     
@@ -678,12 +734,7 @@ local function DrawHUD(widget)
     
 
     Map_Distance = (CalcDistance(widget,widget.MapNorth,widget.MapWest,widget.MapNorth,widget.MapEast,widget.unit) / 10)
-    
-    local DistanceBar_X,DistanceBar_Y
-    
-    DistanceBar_X = lcd_width - ((lcd_width/10) + 10)
-    DistanceBar_Y = Ya + 10
-    
+  
     lcd.color(BLUE)
     lcd.drawFilledRectangle(DistanceBar_X,DistanceBar_Y,(lcd_width / 10),4)
     lcd.color(RED)
@@ -692,35 +743,55 @@ local function DrawHUD(widget)
     
     lcd.color(widget.HUD_Text_Color)
     
-    lcd.drawText(DistanceBar_X + ((lcd_width/10) /2),Yb,string.format("%.0f",Map_Distance)..widget.FM,CENTERED)
+    Value, Unit = FormatValueString(widget,Map_Distance)
     
-      lcd.drawText(Xa,Ya,"LAT:",LEFT)
-      lcd.drawText(Xa,Yb,"LONG:",LEFT)    
+    lcd.drawText(DistanceBar_Text_X + ((lcd_width/10) /2),DistanceBar_Text_Y,Value..Unit,CENTERED)
+    
+      lcd.drawText(Xa,Ya,"LAT:",RIGHT)
+      lcd.drawText(Xa,Yb,"LONG:",RIGHT)    
     
     if widget.GPS_Annotation == 0 then
       lcd.drawText(Xaa,Ya,DMSLatString,LEFT)
       lcd.drawText(Xaa,Yb,DMSLongString,LEFT)    
     else
-      lcd.drawText(Xaa,Ya,widget.NS..string.format("%.6f",widget.GPSLAT),LEFT)
-      lcd.drawText(Xaa,Yb,widget.EW..string.format("%.6f",widget.GPSLONG),LEFT)
+      lcd.drawText(Xaa,Ya,string.format("%.5f",widget.GPSLAT)..widget.NS,LEFT)
+      lcd.drawText(Xaa,Yb,string.format("%.5f",widget.GPSLONG)..widget.EW,LEFT)
     end
          
     
-
-
     local ALT = ConvertAltitude(widget)
     local SPD = ConvertSpeed(widget)
+    local LOS = (math.sqrt(((widget.Distance/1000) * (widget.Distance/1000)) + ((ALT/1000) * (ALT/1000)))) * 1000
 
-    lcd.drawText(Xb,Ya,"Speed:",LEFT)
-    lcd.drawText(Xb,Yb,"Altitude:",LEFT)
-    lcd.drawText(Xc,Ya,"Course:",LEFT)
+    lcd.drawText(Xb,Ya,"Speed:",RIGHT)
+    lcd.drawText(Xb,Yb,"Altitude:",RIGHT)
+    lcd.drawText(Xc,Ya,"Course:",RIGHT)
+    lcd.drawText(Xd,Ya,"Distance:",RIGHT)
+    lcd.drawText(Xd,Yb,"LOS:",RIGHT)
+    
+    if widget.unit == 1 then
+      widget.SPD = "mph"
+    else
+      widget.SPD = "Km/h"
+    end      
     
     lcd.drawText(Xbb,Ya,string.format("%.0f",SPD)..widget.SPD,LEFT)
-    lcd.drawText(Xbb,Yb,string.format("%.0f",ALT)..widget.FM,LEFT)
+    
+    
+    Value, Unit = FormatValueString(widget,ALT)
+    lcd.drawText(Xbb,Yb,Value..Unit,LEFT)
     lcd.drawText(Xcc,Ya,string.format("%.0f",Bearing).."°",LEFT)
     
+    
+    Value, Unit = FormatValueString(widget,widget.Distance)
+    lcd.drawText(Xdd,Ya,Value..Unit,LEFT)
+
+    
+    Value, Unit = FormatValueString(widget,LOS)
+    lcd.drawText(Xdd,Yb,Value..Unit,LEFT)
+    
     if HomeSet then    
-      lcd.drawText(Xc,Yb,"Bearing:", LEFT)
+      lcd.drawText(Xc,Yb,"Bearing:", RIGHT)
       lcd.drawText(Xcc,Yb,string.format("%.0f",math.floor(CalcBearing(widget,widget.HomeLat,widget.HomeLong,widget.GPSLAT,widget.GPSLONG))).."°", LEFT)      
     end
   end
@@ -827,7 +898,8 @@ end
 -- Draws the Home Position
 -------------------------------------------------------------------------------------------------------------------
 local function DrawHomePosition(widget)
-  local lcd_width, lcd_height = lcd.getWindowSize()  
+  local lcd_width, lcd_height = lcd.getWindowSize()
+  
   if Draw_LCD then
     if HomeSet then
       local Radius
@@ -865,11 +937,14 @@ local function DrawHomePosition(widget)
       lcd.color(MAGENTA)
       lcd.drawCircle(widget.GpsPosX,widget.GpsPosY,CalcRadius(widget.GpsPosX,widget.GpsPosY,MidLosX,MidLosY))
       
+      widget.Distance = math.floor(CalcDistance(widget,widget.GPSLAT,widget.GPSLONG,widget.HomeLat,widget.HomeLong,widget.unit))
+      
       -- Draws the Distance on next to the line between Home and Plane
       lcd.font(FONT_STD)
       lcd.color(widget.Distance_Text_Color)
       local text_w, text_h = lcd.getTextSize("")
-      lcd.drawText(MidLosX, MidLosY - (text_h /2), math.floor(CalcDistance(widget,widget.GPSLAT,widget.GPSLONG,widget.HomeLat,widget.HomeLong,widget.unit))..widget.FM , CENTERED)
+      local Value, Unit = FormatValueString(widget,widget.Distance)
+      lcd.drawText(MidLosX, MidLosY - (text_h /2), Value..Unit , CENTERED)
     end
   end
 end
@@ -883,7 +958,9 @@ end
 -------------------------------------------------------------------------------------------------------------------
 local function CheckGPS(widget)
     local lcd_width, lcd_height = lcd.getWindowSize()  
-    if widget.GPSSource == nil or widget.GPSSource:state() == false or widget.GPSLAT < -90 or widget.GPSLAT > 90 or widget.GPSLONG < -180 or widget.GPSLONG > 180 then
+    if widget.StickSim then
+      Draw_LCD = true
+    elseif widget.GPSSource == nil or widget.GPSSource:state() == false or widget.GPSLAT < -90 or widget.GPSLAT > 90 or widget.GPSLONG < -180 or widget.GPSLONG > 180 then
       lcd.font(FONT_XXL)
       DrawAlertBox(widget,"NO GPS SIGNAL", WHITE, lcd.RGB(255,0,0,0.4))
       Draw_LCD = false
@@ -896,6 +973,16 @@ end
 
 
 
+-------------------------------------------------------------------------------------------------------------------
+-- Converts Source input to Map positions
+-------------------------------------------------------------------------------------------------------------------
+local function GpsSimInput(widget)
+    -- GPS Simulator by source input
+    if widget.StickSim then
+      widget.GPSLAT = (((widget.LatValue - -1024) * (widget.MapNorth - widget.MapSouth)  ) / (1024 - -1024)) + widget.MapSouth
+      widget.GPSLONG = (((widget.LongValue - -1024) * (widget.MapEast - widget.MapWest)  ) / (1024 - -1024)) + widget.MapWest
+    end  
+end
 
 
 
@@ -925,6 +1012,9 @@ local function paint(widget)
       ValidateSources(widget)     -- Validates Sources otherwise return default values
       CheckSources(widget)        -- Checks if sates of sources are changed
       ReadMapCoordinates(widget)  -- Reads the coordinates of the corresponding Map Image
+      
+      GpsSimInput(widget)         -- Stick Simulator function
+      
       CalcLCDPosition(widget)     -- Calls function to calculate LCD X/Y position from current GPS position
       SetHome(widget)             -- Stores new Home Position on Reset
       CheckPlaneOnMap(widget)     -- Check if Plane is visible on the map
@@ -934,6 +1024,7 @@ local function paint(widget)
       CheckGPS(widget)            -- Checks if valid GPS signal is preset otherwise return
       DrawHomePosition(widget)    -- Draws Home Position
       DrawPlane(widget)           -- Draws Arrow or Out of range
+      GetNSEW(widget)            -- Gets all units
       BuildDMSstr(widget)         -- Builds DMS strings
       DrawHUD(widget)             -- Draws HUD
    
@@ -1010,6 +1101,22 @@ local function wakeup(widget)
       if RSSIState == false then
         lcd.invalidate()
       end
+    end   
+    
+    if widget.LatSource then
+        local newValue = widget.LatSource:value()
+        if widget.LatSource ~= newValue then
+            widget.LatValue = newValue
+            lcd.invalidate()
+        end
+    end    
+    
+    if widget.LongSource then
+        local newValue = widget.LongSource:value()
+        if widget.LongSource ~= newValue then
+            widget.LongValue = newValue
+            lcd.invalidate()
+        end
     end      
     
 end
@@ -1096,28 +1203,49 @@ local function configure(widget)
     line = form.addLine("Line Color")
     local field_linecolor = form.addColorField(line, nil, function() return widget.LineColor end, function(color) widget.LineColor = color end)      
    
- 
+     -- Stick Simulator
+    line = form.addLine("Stick GPS Simulator")
+    local field_stickSim = form.addBooleanField(line, form.getFieldSlots(line)[0],
+      function() return widget.StickSim end,
+        function(value)
+          widget.StickSim = value
+            widget.field_latSource:enable(value)
+            widget.field_longSource:enable(value)
+        end) 
+    
+        -- Source choice
+    line = form.addLine("Latitude Source Stick")
+    widget.field_latSource = form.addSourceField(line, nil, function() return widget.LatSource end, function(value) widget.LatSource = value end)
+    widget.field_latSource:enable(widget.StickSim)
+    
+        -- Source choice
+    line = form.addLine("Longitude Source Stick")
+    widget.field_longSource = form.addSourceField(line, nil, function() return widget.LongSource end, function(value) widget.LongSource = value end)
+    widget.field_longSource:enable(widget.StickSim) 
  
 
  
 end
 
 local function read(widget)
-    widget.GPSSource          = storage.read("GPS_Source")
-    widget.SpeedSource        = storage.read("Speed_Source")
-    widget.AltitudeSource     = storage.read("Altitude_Source")
-    widget.CourseSource       = storage.read("Course_Source")
-    widget.ResetSource        = storage.read("Reset_Source")
-    widget.RSSISource         = storage.read("RSSI_Source")
-    widget.unit               = storage.read("Unit")
-    widget.GPS_Annotation     = storage.read("GPS_Annotation")
-    widget.ArrowColor         = storage.read("ArrowColor")
-    widget.HUD_Text_Color     = storage.read("HUD_Text_Color")
-    widget.Distance_Text_Color= storage.read("Distance_Text_Color")
-    widget.LineColor          = storage.read("LineColor")
-    widget.Calculate_Bearing  = storage.read("Calculate_Bearing")
-    widget.Update_Distance    = storage.read("Update_Distance")
-    widget.Map_Select         = storage.read("Map_Select")
+    widget.GPSSource                    = storage.read("GPS_Source")
+    widget.SpeedSource                  = storage.read("Speed_Source")
+    widget.AltitudeSource               = storage.read("Altitude_Source")
+    widget.CourseSource                 = storage.read("Course_Source")
+    widget.ResetSource                  = storage.read("Reset_Source")
+    widget.RSSISource                   = storage.read("RSSI_Source")
+    widget.unit                         = storage.read("Unit")
+    widget.GPS_Annotation               = storage.read("GPS_Annotation")
+    widget.ArrowColor                   = storage.read("ArrowColor")
+    widget.HUD_Text_Color               = storage.read("HUD_Text_Color")
+    widget.Distance_Text_Color          = storage.read("Distance_Text_Color")
+    widget.LineColor                    = storage.read("LineColor")
+    widget.Calculate_Bearing            = storage.read("Calculate_Bearing")
+    widget.Update_Distance              = storage.read("Update_Distance")
+    widget.Map_Select                   = storage.read("Map_Select")
+    widget.LatSource                    = storage.read("Lat_Source")
+    widget.LongSource                   = storage.read("Long_Source")
+    widget.StickSim                     = storage.read("StickSim")    
 end
 
 local function write(widget)    
@@ -1136,6 +1264,9 @@ local function write(widget)
     storage.write("Calculate_Bearing"   , widget.Calculate_Bearing)
     storage.write("Update_Distance"     , widget.Update_Distance)
     storage.write("Map_Select"          , widget.Map_Select)
+    storage.write("Lat_Source"          , widget.LatSource)
+    storage.write("Long_Source"         , widget.LongSource)
+    storage.write("StickSim"            , widget.StickSim)    
 
 end
 
