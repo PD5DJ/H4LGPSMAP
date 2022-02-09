@@ -144,3 +144,15 @@ Select the color of the text that is used to show the distance between plane and
 ### Line Color:
 
 Select the color of the line that is used to show the bearing of the plane from home.
+
+### Stick GPS Simulator:
+
+Enables a GPS simulation controlled by Stick or any other source input.
+
+### Latitude Source Stick:
+
+Select Latitude control input for Stick GPS Simulation.
+
+### Longitude Source Stick:
+
+Select Longitude control input for Stick GPS Simulation.
