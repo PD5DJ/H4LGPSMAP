@@ -1,44 +1,42 @@
----- ##########################################################################################################
----- #                                                                                                        #
----- # Hobby4life GPS Map Widget for ETHOS                                                                    #
----- #                                                                                                        #
----- #                                                                                                        #
----- #                                                                                                        #
----- # License GPLv3: http://www.gnu.org/licenses/gpl-3.0.html                                                #
----- #                                                                                                        #
----- # This program is free software; you can redistribute it and/or modify                                   #
----- # it under the terms of the GNU General Public License version 3 as                                      #
----- # published by the Free Software Foundation.                                                             #
----- #                                                                                                        #
----- #                                                                                                        #
----- # Björn Pasteuning / Hobby4life 2022                                                                     #
----- #                                                                                                        #
----- ##########################################################################################################
+---- ##########################################################################
+---- #                                                                        #
+---- # Hobby4life GPS Map Widget for ETHOS                                    #
+---- #                                                                        #
+---- # For Generating MAPS go to https://ethosmap.hobby4life.nl               #
+---- #                                                                        #
+---- # Björn Pasteuning / Hobby4life 2022                                     #
+---- #                                                                        #
+---- # Website: https://www.hobby4life.nl                                     #
+---- #                                                                        #
+---- ##########################################################################
 
 
 
--------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
 -- Set up of variables used in whole scope
--------------------------------------------------------------------------------------------------------------------
-local Version           = "v1.05"
+------------------------------------------------------------------------------------------------
+local Version           = "v1.06"
 local Title             = "Hobby4Life - GPS Map"
 local translations      = {en="H4L GPS Map"}
 local mapImage                  -- Global use of map image
 local Windsock                  -- Global use of windsock image
-local ForceHome         = false -- Global Flag to Force Homing
-local HomeSet           = false -- Global Flag if Home is set or not
-local RadioInfo         = {}  
-local Draw_LCD          = false -- Flag used in functions that have draw functions
 local DMSLatString      = ""    -- Global DMS Latitude string
 local DMSLongString     = ""    -- Global DMS Longitude string
 local Heading_Previous  = 0     -- Stores a global valid heading value used in drawArrow()
 local TempLat           = 0     -- Default Compare Latitude, used in drawArrow()
 local TempLong          = 0     -- Default Compare Latitude, used in drawArrow()
-local LCD_Type                  -- 0 = X10/12, 1 = X20
-local Map_change                -- Flag used when a map is changed
+local LCD_Type          = 0     -- 0 = X10/12, 1 = X20
+local Map_change        = false -- Flag used when a map is changed
 local Run_Script        = false -- Used to control the whole paint loop
 local Bearing           = 0     -- Global Bearing variable
 
+
+
+
+------------------------------------------------------------------------------------------------
+-- Language Setup
+------------------------------------------------------------------------------------------------
 local function name(widget)
     local locale = system.getLocale()
     return translations[locale] or translations["en"]
@@ -49,38 +47,59 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Default Source values upon creation of widget
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function create()
     return {
-            GPSSource=nil, GPSLAT=0, GPSLONG=0,
-            SpeedSource=nil, SPEED=0, SPEED_UNIT=0,
-            AlitudeSource=nil, ALTITUDE=0, ALTITUDE_UNIT=0,
-            CourseSource=nil, COURSE=0,
-            RSSISource=nil, RSSI=0,
-            Calculate_Bearing=true, Update_Distance = 25,
-            HomePosX=0, HomePosY=0,
-            GpsPosX=0, GpsPosY=0,
-            HomeLat=0, HomeLong=0,
-            ResetSource=nil, 
-            MapNorth=0,MapSouth=0,MapWest=0,MapEast=0,
-            LatValue=0,LongValue=0,
-            PlaneVisible = false,
-            ArrowColor = lcd.RGB(0,255,0),
-            HUD_Text_Color = lcd.RGB(255,255,255),
-            Distance_Text_Color = lcd.RGB(0,255,190),
-            LineColor = lcd.RGB(0,255,190),
-            NS="",EW="", FM="", SPD="",
-            LCD_Type, --800x480(x20) or 480x272(x10/x12)
-            TX_VOLTAGE = 0,
-            Map_Select = 0,
-            unit = 0,           -- 0 = Metric, 1 = Imperial
-            GPS_Annotation = 0, -- 0 = DMS, 1 = Decimal
-            Distance = 0,
-            StickSim = false,   -- True = Stick GPS simulation on, False = off
-            LatSource=0,LongSource=0, -- Input values for Stick GPS Simulation
-            LatValue=0,LongValue=0,   -- Input values for Stick GPS Simulation
+--   widget.xxxxxxxxx
+            GPSSource               = nil,    -- Configuration, GPS Source input
+            GPSLAT                  = 0,      -- Configuration, Lattiude value from GPSSource
+            GPSLONG                 = 0,      -- Configuration, Longitide value from GPSSource
+            SpeedSource             = nil,    -- Configuration, Speed Source input
+            SPEED                   = 0,      -- Configuration, Speed value from SpeedSource
+            SPEED_UNIT              = 0,      -- Configuration, Speed Unit from SpeedSource
+            AlitudeSource           = nil,    -- Configuration, Altitude Source input
+            ALTITUDE                = 0,      -- Configuration, Altitude value from AlitudeSource
+            ALTITUDE_UNIT           = 0,      -- Configuration, Altitude Unit from AlitudeSource
+            CourseSource            = nil,    -- Configuration, Course Source input
+            COURSE                  = 0,      -- Configuration, Course value from CourseSource
+            StickSim                = false,  -- Configuration, True = Stick GPS simulation on, False = off
+            SimLatSource            = 0,      -- Configuration, Simulator Latitude Source input
+            SimLongSource           = 0,      -- Configuration, Simulator Longitude Source input
+            SimLatValue             = 0,      -- Configuration, Simulator Lattiude value from SimLatSource
+            SimLongValue            = 0,      -- Configuration, Simulator Lattiude value from SimLongSource
+            RSSISource              = nil,    -- Configuration, RSSI Source input
+            RSSI                    = 0,      -- Configuration, RSSI value from RSSISource
+            UNIT                    = 0,      -- Configuration, 0 = Metric, 1 = Imperial            
+            ResetSource             = nil,    -- Configuration, Reset Source Input  
+            GPS_Annotation          = 0,      -- Configuration, 0 = DMS, 1 = Decimal            
+            ArrowColor              = lcd.RGB(0,255,0),     -- Configuration, Arrow color
+            HUD_Text_Color          = lcd.RGB(255,255,255), -- Configuration, HUD Text color
+            Distance_Text_Color     = lcd.RGB(0,255,190),   -- Configuration, Distance Text color
+            LineColor               = lcd.RGB(0,255,190),   -- Configuration, Line color            
+            Calculate_Bearing       = true,   -- Configuration, If Bearing must be calculated
+            Update_Distance         = 25,     -- Configuration, Calculation between xx m/ft. use with Calculate_Bearing
+            TX_VOLTAGE              = 0,      -- Widget wide TX Voltage Source            
+            HomePosX                = 0,      -- Widget wide Home X display position
+            HomePosY                = 0,      -- Widget wide Home Y display position
+            GpsPosX                 = 0,      -- Widget wide GPS X display position
+            GpsPosY                 = 0,      -- Widget wide GPS Y display position
+            HomeLat                 = 0,      -- Widget wide Home Lattitude
+            HomeLong                = 0,      -- Widget wide Home Longitude
+            MapNorth                = 0,      -- Widget wide Map Topside Image coordinate
+            MapSouth                = 0,      -- Widget wide Map Bottomside Image coordinate
+            MapWest                 = 0,      -- Widget wide Map Westside Image coordinate
+            MapEast                 = 0,      -- Widget wide Map Eastside Image coordinate
+            PlaneVisible            = false,  -- Widget wide Flag, uses of plane is inside or outside map visibility
+            NS                      = "",     -- Widget wide North or South string
+            EW                      = "",     -- Widget wide East or West string
+            SPD                     = "",     -- Widget wide Speed unit
+            Map_Select              = 0,      -- Widget wide Map Selection flag.
+            Distance                = 0,      -- Widget wide Distance value 
+            ForceHome               = false,  -- Widget wide Flag to Force Homing
+            HomeSet                 = false,  -- Widget wide Flag if Home is set or not            
+            Draw_LCD                = false,  -- Widget wide Flag used in functions that have draw functions
             }
 end
 
@@ -92,9 +111,10 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
--- Map Coordinates
--------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
+-- Map Coordinates, Reads external mapX.lua files and retrieves its variables.
+------------------------------------------------------------------------------------------------
 local function ReadMapCoordinates(widget)
   if Map_change ~= widget.Map_Select then
     if widget.Map_Select == 0 then
@@ -124,10 +144,10 @@ local function ReadMapCoordinates(widget)
     end
     widget.MapNorth = North
     widget.MapSouth = South
-    widget.MapWest = West
-    widget.MapEast = East    
-    mapImage = Image
-    Map_change = widget.Map_Select
+    widget.MapWest  = West
+    widget.MapEast  = East    
+    mapImage        = Image
+    Map_change      = widget.Map_Select
   end
 end
 
@@ -138,9 +158,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Calculates the radius between 2 X,Y points
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function CalcRadius( x1, y1, x2, y2 )
   local dx = x1 - x2
   local dy = y1 - y2
@@ -156,9 +176,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Draws a Alert Box
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function DrawAlertBox(widget,string,color,bkcolor)
       local lcd_width, lcd_height = lcd.getWindowSize()
       local text_w, text_h = lcd.getTextSize("")
@@ -179,9 +199,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to draw Arrow
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function drawArrow(Start_X,Start_Y,Arrow_Width,Arrow_Length,Angle,Angle_Offset,Style,widget)
 
 --        C
@@ -228,9 +248,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to Draw a bargraph
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function drawBargraph(x,y, size,invert,background,gradient,color,value,min,max) 
   
     --[[
@@ -336,10 +356,11 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to Validate all sources, otherwise return default values.
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function ValidateSources(widget)
+    
     if widget.SPEED == nil then
         widget.SPEED = 0
     end    
@@ -375,9 +396,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Calculates LCD X/Y Position on map from GPS coordinates
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function CalcLCDPosition(widget)
     local lcd_width, lcd_height = lcd.getWindowSize()
     -- Calculates position on LCD of current GPS position
@@ -391,17 +412,17 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Sets home position
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function SetHome(widget)
   local lcd_width, lcd_height = lcd.getWindowSize()
   if widget.GPSLAT ~= 0 and widget.GPSLONG ~= 0 then
-    if ForceHome then
+    if widget.ForceHome then
         widget.HomeLat = widget.GPSLAT
         widget.HomeLong = widget.GPSLONG
-        ForceHome = false
-        HomeSet = true
+        widget.ForceHome = false
+        widget.HomeSet = true
     end
     widget.HomePosX = math.floor(lcd_width*((widget.HomeLong - widget.MapWest)/(widget.MapEast - widget.MapWest)))
     widget.HomePosY = math.floor(lcd_height*((widget.MapNorth - widget.HomeLat)/(widget.MapNorth - widget.MapSouth)))
@@ -416,27 +437,27 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Checks if Reset is triggered
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function CheckSources(widget)
   -- Checks if Reset source is triggered, if so then forces a new Home init.
   if widget.rstValue == 1024 then
-    ForceHome = true
+    widget.ForceHome = true
   end
 end
 
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to get North, South, East, West indicators
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function GetNSEW(widget)
     if widget.GPSLAT > 0 then
       widget.NS = "N"
     else
-     widget.NS = "S"
+      widget.NS = "S"
     end
 
     if widget.GPSLONG > 0 then
@@ -450,34 +471,34 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to create formatted strings of values + units
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function FormatValueString(widget,value)
   local unit
   if value > 999999 then
-    if widget.unit == 1 then
-      unit= "mi"
+    if widget.UNIT == 1 then
+      unit  = "mi"
       value = string.format("%.0f",(value / 5280))
     else
-      unit = "km"
+      unit  = "km"
       value = string.format("%.0f",(value / 1000))
     end      
   elseif value > 999 then
-    if widget.unit == 1 then
-      unit= "mi"
+    if widget.UNIT == 1 then
+      unit  = "mi"
       value = string.format("%.1f",(value / 5280))
     else
-      unit = "km"
+      unit  = "km"
       value = string.format("%.1f",(value / 1000))
     end  
   else
-    if widget.unit == 1 then
-      unit= "ft"
+    if widget.UNIT == 1 then
+      unit  = "ft"
       value = string.format("%.0f",value)
     else
+      unit  = "m"
       value = string.format("%.0f",value)
-      unit = "m"
     end  
   end
   return value, unit
@@ -486,17 +507,17 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to calculated bearing angle between 2 coordinates
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 function CalcBearing(widget,PrevLat,PrevLong,NewLat,NewLong)
   local yCalc = math.sin(math.rad(NewLong)-math.rad(PrevLong)) * math.cos(math.rad(NewLat))
   local xCalc = math.cos(math.rad(PrevLat)) * math.sin(math.rad(NewLat)) - math.sin(math.rad(PrevLat)) * math.cos(math.rad(NewLat)) * math.cos(math.rad(NewLat) - math.rad(PrevLat))
-  local Bearing = math.deg(math.atan(yCalc,xCalc))
-  if Bearing < 0 then
-    Bearing = 360 + Bearing
+  local bearing = math.deg(math.atan(yCalc,xCalc))
+  if bearing < 0 then
+    bearing = 360 + bearing
   end   
-  return Bearing
+  return bearing
 end
 
 
@@ -504,9 +525,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to calculate distance between 2 coordinates
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 function CalcDistance(widget,PrevLat,PrevLong,NewLat,NewLong,unit)
   local earthRadius = 0
   if unit == 1 then
@@ -530,9 +551,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to Convert Decimal to Degrees, Minutes, Seconds
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function dec2deg(widget,decimal)
   local Degrees = math.floor(decimal)
   local Minutes = math.floor((decimal - Degrees) * 60)
@@ -547,30 +568,36 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Function to Build Decimal, Minutes, Seconds String
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function BuildDMSstr(widget)
     -- Converts the gps coordinates to Degrees,Minutes,Seconds
     local LatD,LatM,LatS = dec2deg(widget,widget.GPSLAT)
     local LongD,LongM,LongS = dec2deg(widget,widget.GPSLONG)
-    DMSLatString  = LatD.."°"..LatM.."'"..string.format("%.1f",LatS)..widget.NS
-    DMSLongString = LongD.."°"..LongM.."'"..string.format("%.1f",LongS)..widget.EW
+    DMSLatString  = math.abs(LatD).."°"..LatM.."'"..string.format("%.1f",LatS)..widget.NS
+    DMSLongString = math.abs(LongD).."°"..LongM.."'"..string.format("%.1f",LongS)..widget.EW
 end
 
 
 
+
+
+------------------------------------------------------------------------------------------------
+-- Creates pre formatted Altitude strings
+------------------------------------------------------------------------------------------------
 --[[
-09 = UNIT_CENTIMETER           "cm"
-10 = UNIT_METER                "m"
-11 = UNIT_FOOT                 "ft"
-15 = UNIT_KPH                  "km/h"
-16 = UNIT_MPH                  "mph"
-17 = UNIT_KNOT                 "knopen"
+    09 = UNIT_CENTIMETER           "cm"
+    10 = UNIT_METER                "m"
+    11 = UNIT_FOOT                 "ft"
+    15 = UNIT_KPH                  "km/h"
+    16 = UNIT_MPH                  "mph"
+    17 = UNIT_KNOT                 "knots"
 --]]
+
 local function ConvertAltitude(widget)
--- 0 = Metric m/kmh, 1 = Imperial ft/mph
-  if widget.unit == 0 then
+  -- 0 = Metric m/kmh, 1 = Imperial ft/mph
+  if widget.UNIT == 0 then
     if widget.ALTITUDE_UNIT == 9 then
       ALTITUDE = widget.ALTITUDE * 0.01
     elseif widget.ALTITUDE_UNIT == 10 then
@@ -594,8 +621,15 @@ local function ConvertAltitude(widget)
   return ALTITUDE
 end
 
+
+
+
+------------------------------------------------------------------------------------------------
+-- Converts speed value according to unit of speed source
+------------------------------------------------------------------------------------------------
 local function ConvertSpeed(widget)
-  if widget.unit == 0 then
+  -- 0 = Metric m/kmh, 1 = Imperial ft/mph
+  if widget.UNIT == 0 then
     if widget.SPEED_UNIT == 15 then
       SPEED = widget.SPEED 
     elseif widget.SPEED_UNIT == 16 then
@@ -622,50 +656,62 @@ end
 
 
 
-----------------
+------------------------------------------------------------------------------------------------
 -- Draws the HUD
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function DrawHUD(widget)
-  if Draw_LCD then
+  if widget.Draw_LCD then
+    
     local lcd_width, lcd_height = lcd.getWindowSize()  
+    local  Ya,Yb,Yc,Xa,
+           Xaa,Xb,Xbb,Xc,Xcc,Xd,Xdd,
+           Title_X,Title_Y,
+           TX_Voltage_X,TX_Voltage_Y,
+           TX_Voltage_Bar_X,TX_Voltage_Bar_Y,            
+           RSSI_X,RSSI_Y,
+           RSSI_Bar_X,RSSI_Bar_Y,
+           Map_Distance,
+           Value,
+           Unit,
+           DistanceBar_X,DistanceBar_Y,
+           DistanceBar_Text_X,DistanceBar_Text_Y
 
+    --Transparency Color Setup for top and bottom box
     lcd.pen(SOLID)
-    --Setup display layout
     lcd.color(lcd.RGB(128,128,128,0.8)) -- 80% Opacity
  
-    local Ya,Yb,Yc,Xa,Xaa,Xb,Xbb,Xc,Xcc,Xd,Xdd,Title_X,Title_Y,TX_Voltage_X,TX_Voltage_Y,RSSI_X,RSSI_Y,TX_Voltage_Bar_X,TX_Voltage_Bar_Y,RSSI_Bar_X,RSSI_Bar_Y,Map_Distance,Value,Unit,DistanceBar_X,DistanceBar_Y,DistanceBar_Text_X,DistanceBar_Text_Y
-    
-    if LCD_Type == 0 then --X10/12
-      TX_Voltage_X      = 2
-      TX_Voltage_Y      = 0
-      TX_Voltage_Bar_X  = 80
-      TX_Voltage_Bar_Y  = 2      
+    -- X10 / X12 X/Y Display positions
+    if LCD_Type == 0 then
+      TX_Voltage_X          = 2
+      TX_Voltage_Y          = 0
+      TX_Voltage_Bar_X      = 80
+      TX_Voltage_Bar_Y      = 2      
       
-      Title_X           = 240
-      Title_Y           = 0
-      RSSI_X            = 380
-      RSSI_Y            = 0
-      RSSI_Bar_X        = 460
-      RSSI_Bar_Y        = 2     
+      Title_X               = 240
+      Title_Y               = 0
+      RSSI_X                = 380
+      RSSI_Y                = 0
+      RSSI_Bar_X            = 460
+      RSSI_Bar_Y            = 2     
       
-      Bar_Size          = 1.2
+      Bar_Size              = 1.2
             
-      Xa                = 42
-      Xaa               = Xa + 5
-      Xb                = 190
-      Xbb               = Xb + 5
-      Xc                = 320
-      Xcc               = Xc + 5
-      Xd                = 425
-      Xdd               = Xd + 5
+      Xa                    = 42
+      Xaa                   = Xa + 5
+      Xb                    = 190
+      Xbb                   = Xb + 5
+      Xc                    = 320
+      Xcc                   = Xc + 5
+      Xd                    = 425
+      Xdd                   = Xd + 5
       
-      Ya                = 238
-      Yb                = 254
+      Ya                    = 238
+      Yb                    = 254
       
-      DistanceBar_X = 355
-      DistanceBar_Y = 227      
-      DistanceBar_Text_X = 422     
-      DistanceBar_Text_Y = 221
+      DistanceBar_X         = 355
+      DistanceBar_Y         = 227      
+      DistanceBar_Text_X    = 422     
+      DistanceBar_Text_Y    = 221
       
       
       lcd.drawFilledRectangle(0,0,480,16)
@@ -673,38 +719,38 @@ local function DrawHUD(widget)
       lcd.drawFilledRectangle(410,222,70,14)  
       
       
-
-    elseif LCD_Type == 1 then -- X20
-      TX_Voltage_X      = 5
-      TX_Voltage_Y      = 0
-      TX_Voltage_Bar_X  = 125
-      TX_Voltage_Bar_Y  = 2
+    -- X20 X/Y Display positions
+    elseif LCD_Type == 1 then
+      TX_Voltage_X          = 5
+      TX_Voltage_Y          = 0
+      TX_Voltage_Bar_X      = 125
+      TX_Voltage_Bar_Y      = 2
       
-      Title_X           = 400
-      Title_Y           = 0
-      RSSI_X            = 650
-      RSSI_Y            = 0
-      RSSI_Bar_X        = 765
-      RSSI_Bar_Y        = 2
+      Title_X               = 400
+      Title_Y               = 0
+      RSSI_X                = 650
+      RSSI_Y                = 0
+      RSSI_Bar_X            = 765
+      RSSI_Bar_Y            = 2
       
-      Bar_Size          = 2
+      Bar_Size              = 2
             
-      Xa                = 70
-      Xaa               = Xa + 10
-      Xb                = 310
-      Xbb               = Xb + 10
-      Xc                = 520
-      Xcc               = Xc + 10
-      Xd                = 710
-      Xdd               = Xd + 10
+      Xa                    = 70
+      Xaa                   = Xa + 10
+      Xb                    = 310
+      Xbb                   = Xb + 10
+      Xc                    = 520
+      Xcc                   = Xc + 10
+      Xd                    = 710
+      Xdd                   = Xd + 10
       
-      Ya                = 422
-      Yb                = 450
+      Ya                    = 422
+      Yb                    = 450
       
-      DistanceBar_X = 600
-      DistanceBar_Y = 402  
-      DistanceBar_Text_X = 710
-      DistanceBar_Text_Y = 392
+      DistanceBar_X         = 600
+      DistanceBar_Y         = 402  
+      DistanceBar_Text_X    = 710
+      DistanceBar_Text_Y    = 392
       
       lcd.drawFilledRectangle(0,0,800,24)
       lcd.drawFilledRectangle(0,420,800,60)      
@@ -732,8 +778,8 @@ local function DrawHUD(widget)
       lcd.font(FONT_BOLD)
     end    
     
-
-    Map_Distance = (CalcDistance(widget,widget.MapNorth,widget.MapWest,widget.MapNorth,widget.MapEast,widget.unit) / 10)
+    -- Draws the Distance bar
+    Map_Distance = (CalcDistance(widget,widget.MapNorth,widget.MapWest,widget.MapNorth,widget.MapEast,widget.UNIT) / 10)
   
     lcd.color(BLUE)
     lcd.drawFilledRectangle(DistanceBar_X,DistanceBar_Y,(lcd_width / 10),4)
@@ -747,21 +793,22 @@ local function DrawHUD(widget)
     
     lcd.drawText(DistanceBar_Text_X + ((lcd_width/10) /2),DistanceBar_Text_Y,Value..Unit,CENTERED)
     
-      lcd.drawText(Xa,Ya,"LAT:",RIGHT)
-      lcd.drawText(Xa,Yb,"LONG:",RIGHT)    
+    -- Draws Coordinates in bottom box
+    lcd.drawText(Xa,Ya,"LAT:",RIGHT)
+    lcd.drawText(Xa,Yb,"LONG:",RIGHT)    
     
     if widget.GPS_Annotation == 0 then
       lcd.drawText(Xaa,Ya,DMSLatString,LEFT)
       lcd.drawText(Xaa,Yb,DMSLongString,LEFT)    
     else
-      lcd.drawText(Xaa,Ya,string.format("%.5f",widget.GPSLAT)..widget.NS,LEFT)
-      lcd.drawText(Xaa,Yb,string.format("%.5f",widget.GPSLONG)..widget.EW,LEFT)
+      lcd.drawText(Xaa,Ya,math.abs(string.format("%.5f",widget.GPSLAT))..widget.NS,LEFT)
+      lcd.drawText(Xaa,Yb,math.abs(string.format("%.5f",widget.GPSLONG))..widget.EW,LEFT)
     end
          
-    
-    local ALT = ConvertAltitude(widget)
-    local SPD = ConvertSpeed(widget)
-    local LOS = (math.sqrt(((widget.Distance/1000) * (widget.Distance/1000)) + ((ALT/1000) * (ALT/1000)))) * 1000
+    -- Draws Altitde, Speed, Distance, Bearing, Line Of Sight
+    local Altitude = ConvertAltitude(widget)
+    local Speed = ConvertSpeed(widget)
+    local LOS = (math.sqrt(((widget.Distance/1000) * (widget.Distance/1000)) + ((Altitude/1000) * (Altitude/1000)))) * 1000
 
     lcd.drawText(Xb,Ya,"Speed:",RIGHT)
     lcd.drawText(Xb,Yb,"Altitude:",RIGHT)
@@ -769,31 +816,27 @@ local function DrawHUD(widget)
     lcd.drawText(Xd,Ya,"Distance:",RIGHT)
     lcd.drawText(Xd,Yb,"LOS:",RIGHT)
     
-    if widget.unit == 1 then
+    if widget.UNIT == 1 then
       widget.SPD = "mph"
     else
       widget.SPD = "Km/h"
     end      
     
-    lcd.drawText(Xbb,Ya,string.format("%.0f",SPD)..widget.SPD,LEFT)
-    
-    
-    Value, Unit = FormatValueString(widget,ALT)
+    lcd.drawText(Xbb,Ya,string.format("%.0f",Speed)..widget.SPD,LEFT)
+ 
+    Value, Unit = FormatValueString(widget,Altitude)
     lcd.drawText(Xbb,Yb,Value..Unit,LEFT)
     lcd.drawText(Xcc,Ya,string.format("%.0f",Bearing).."°",LEFT)
-    
-    
+
     Value, Unit = FormatValueString(widget,widget.Distance)
     lcd.drawText(Xdd,Ya,Value..Unit,LEFT)
 
-    
     Value, Unit = FormatValueString(widget,LOS)
     lcd.drawText(Xdd,Yb,Value..Unit,LEFT)
     
-    if HomeSet then    
-      lcd.drawText(Xc,Yb,"Bearing:", RIGHT)
-      lcd.drawText(Xcc,Yb,string.format("%.0f",math.floor(CalcBearing(widget,widget.HomeLat,widget.HomeLong,widget.GPSLAT,widget.GPSLONG))).."°", LEFT)      
-    end
+    lcd.drawText(Xc,Yb,"Bearing:", RIGHT)
+    lcd.drawText(Xcc,Yb,string.format("%.0f",math.floor(CalcBearing(widget,widget.HomeLat,widget.HomeLong,widget.GPSLAT,widget.GPSLONG))).."°", LEFT)      
+
   end
 end
 
@@ -803,9 +846,9 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Checks if correct display type is used and sets LCD_Type flag
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function CheckDisplayType(widget)
     local lcd_width, lcd_height = lcd.getWindowSize()  
     if lcd_width == 800 and lcd_height == 480 then
@@ -825,33 +868,32 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Draws the Plane
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function DrawPlane(widget)
-  if Draw_LCD then
+  if widget.Draw_LCD then
     local lcd_width, lcd_height = lcd.getWindowSize() 
     if widget.PlaneVisible then
       lcd.color(widget.ArrowColor)
       -- Draws the GPS Position Dot
       -- lcd.drawFilledCircle(widget.GpsPosX,widget.GpsPosY,5)
       
-      --local Bearing
-      local Distance = CalcDistance(widget,widget.GPSLAT,widget.GPSLONG,TempLat,TempLong,widget.unit)
-      if Distance == nil then
-        Distance = 0
+      local Travelled_Distance = CalcDistance(widget,widget.GPSLAT,widget.GPSLONG,TempLat,TempLong,widget.UNIT)
+      if Travelled_Distance == nil then
+        Travelled_Distance = 0
       end
       
       if widget.Calculate_Bearing then
         -- Checks if there is any movement between current and previous position
         -- If so then also check if this movement is bigger then widget.Update_Distance
         -- If both conditions meet, then update heading angle.
-        if (widget.GPSLAT ~= TempLat or widget.GPSLONG ~= TempLong) and Distance > widget.Update_Distance then
+        if (widget.GPSLAT ~= TempLat or widget.GPSLONG ~= TempLong) and Travelled_Distance > widget.Update_Distance then
           Bearing = CalcBearing(widget,TempLat,TempLong,widget.GPSLAT,widget.GPSLONG)
           TempLat = widget.GPSLAT
           TempLong = widget.GPSLONG
         -- Checks if there is no movement, then return previous heading angle.
-        elseif widget.GPSLAT == TempLat and widget.GPSLONG == TempLong and Distance == 0 then
+        elseif widget.GPSLAT == TempLat and widget.GPSLONG == TempLong and Travelled_Distance == 0 then
           Bearing = Heading_Previous
         -- return previous heading angle in any other case.
         else
@@ -864,21 +906,21 @@ local function DrawPlane(widget)
         end
       end
 
-        lcd.pen(SOLID)
-        local w,h
-        if LCD_Type == 0 then
-          w = 15
-          h = 30
-        elseif LCD_Type == 1 then
-          w = 30
-          h = 50
-        end
+      lcd.pen(SOLID)
+      local w,h
+      if LCD_Type == 0 then
+        w = 15
+        h = 30
+      elseif LCD_Type == 1 then
+        w = 30
+        h = 50
+      end
 
-        drawArrow(widget.GpsPosX,widget.GpsPosY,w,h,Bearing,90,2,widget)
-        drawArrow(widget.GpsPosX,widget.GpsPosY,(w/100)*70,(h/100)*80,Bearing,90,2,widget)
-        drawArrow(widget.GpsPosX,widget.GpsPosY,(w/100)*30,(h/100)*60,Bearing,90,2,widget)  
+      drawArrow(widget.GpsPosX,widget.GpsPosY,w,h,Bearing,90,2,widget)
+      drawArrow(widget.GpsPosX,widget.GpsPosY,(w/100)*70,(h/100)*80,Bearing,90,2,widget)
+      drawArrow(widget.GpsPosX,widget.GpsPosY,(w/100)*30,(h/100)*60,Bearing,90,2,widget)  
         
-        Heading_Previous = Bearing
+      Heading_Previous = Bearing
 
     elseif widget.PlaneVisible == false then
       lcd.font(FONT_XXL)
@@ -894,14 +936,14 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Draws the Home Position
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function DrawHomePosition(widget)
   local lcd_width, lcd_height = lcd.getWindowSize()
   
-  if Draw_LCD then
-    if HomeSet then
+  if widget.Draw_LCD then
+    if widget.HomeSet then
       local Radius
       if LCD_Type == 0 then
         Radius = 8
@@ -937,7 +979,7 @@ local function DrawHomePosition(widget)
       lcd.color(MAGENTA)
       lcd.drawCircle(widget.GpsPosX,widget.GpsPosY,CalcRadius(widget.GpsPosX,widget.GpsPosY,MidLosX,MidLosY))
       
-      widget.Distance = math.floor(CalcDistance(widget,widget.GPSLAT,widget.GPSLONG,widget.HomeLat,widget.HomeLong,widget.unit))
+      widget.Distance = math.floor(CalcDistance(widget,widget.GPSLAT,widget.GPSLONG,widget.HomeLat,widget.HomeLong,widget.UNIT))
       
       -- Draws the Distance on next to the line between Home and Plane
       lcd.font(FONT_STD)
@@ -953,43 +995,43 @@ end
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Checks if valid GPS source is available or values are available otherwise display No Signal
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function CheckGPS(widget)
     local lcd_width, lcd_height = lcd.getWindowSize()  
     if widget.StickSim then
-      Draw_LCD = true
+      widget.Draw_LCD = true
     elseif widget.GPSSource == nil or widget.GPSSource:state() == false or widget.GPSLAT < -90 or widget.GPSLAT > 90 or widget.GPSLONG < -180 or widget.GPSLONG > 180 then
       lcd.font(FONT_XXL)
       DrawAlertBox(widget,"NO GPS SIGNAL", WHITE, lcd.RGB(255,0,0,0.4))
-      Draw_LCD = false
+      widget.Draw_LCD = false
       return
     else
-      Draw_LCD = true
+      widget.Draw_LCD = true
     end
 end
 
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Converts Source input to Map positions
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function GpsSimInput(widget)
     -- GPS Simulator by source input
     if widget.StickSim then
-      widget.GPSLAT = (((widget.LatValue - -1024) * (widget.MapNorth - widget.MapSouth)  ) / (1024 - -1024)) + widget.MapSouth
-      widget.GPSLONG = (((widget.LongValue - -1024) * (widget.MapEast - widget.MapWest)  ) / (1024 - -1024)) + widget.MapWest
+      widget.GPSLAT = (((widget.SimLatValue - -1024) * (widget.MapNorth - widget.MapSouth)  ) / (1024 - -1024)) + widget.MapSouth
+      widget.GPSLONG = (((widget.SimLongValue - -1024) * (widget.MapEast - widget.MapWest)  ) / (1024 - -1024)) + widget.MapWest
     end  
 end
 
 
 
 
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- Checks if Plane is visible on the map
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 local function CheckPlaneOnMap(widget)
     -- Checks if plane is visible on the map
     if widget.GPSLAT < widget.MapNorth and widget.GPSLAT > widget.MapSouth and widget.GPSLONG < widget.MapEast and widget.GPSLONG > widget.MapWest then
@@ -1003,7 +1045,9 @@ end
 
 
 
-
+------------------------------------------------------------------------------------------------
+-- Main Loop
+------------------------------------------------------------------------------------------------
 local function paint(widget)
     CheckDisplayType(widget)    -- Checks wheter run on X20 or X10/X12
     
@@ -1012,29 +1056,33 @@ local function paint(widget)
       ValidateSources(widget)     -- Validates Sources otherwise return default values
       CheckSources(widget)        -- Checks if sates of sources are changed
       ReadMapCoordinates(widget)  -- Reads the coordinates of the corresponding Map Image
-      
       GpsSimInput(widget)         -- Stick Simulator function
-      
       CalcLCDPosition(widget)     -- Calls function to calculate LCD X/Y position from current GPS position
       SetHome(widget)             -- Stores new Home Position on Reset
       CheckPlaneOnMap(widget)     -- Check if Plane is visible on the map
+      
+      -- Draws the map image only when valid.
       if mapImage ~= nil then
-        lcd.drawBitmap(0, 0, mapImage, lcd_width, lcd_height)  -- Draws the map image
+        lcd.drawBitmap(0, 0, mapImage, lcd_width, lcd_height)
       end
+      
       CheckGPS(widget)            -- Checks if valid GPS signal is preset otherwise return
       DrawHomePosition(widget)    -- Draws Home Position
       DrawPlane(widget)           -- Draws Arrow or Out of range
       GetNSEW(widget)            -- Gets all units
       BuildDMSstr(widget)         -- Builds DMS strings
       DrawHUD(widget)             -- Draws HUD
-   
+  
     end
 end
 
 
 
-
+------------------------------------------------------------------------------------------------
+-- All Sources are updated in this Wakeup event, if new values are available then invalidate the LCD.
+------------------------------------------------------------------------------------------------
 local function wakeup(widget)
+    -- Checks if widget.ResetSource is available, Then store its value in widget.rstValue
     if widget.ResetSource then
         local newValue = widget.ResetSource:value()
         if widget.rstValue ~= newValue then
@@ -1043,13 +1091,16 @@ local function wakeup(widget)
         end
     end
 
+    -- Checks if widget.GPSSource is available
+    -- Then derrives Lattitude and Longitude values in widget.GPSLat & widget.GPSLong
+    -- Also checks if the values are valid by checking its state. Used with "NO GPS AVAILABLE"
     if widget.GPSSource then
-      local LatValue = widget.GPSSource:value(OPTION_LATITUDE)
-      local LongValue = widget.GPSSource:value(OPTION_LONGITUDE)
+      local Lat_Value = widget.GPSSource:value(OPTION_LATITUDE)
+      local Long_Value = widget.GPSSource:value(OPTION_LONGITUDE)
       local GPSState = widget.GPSSource:state()
-      if widget.GPSLAT ~= LatValue or widget.GPSLONG ~= LongValue then
-        widget.GPSLAT = LatValue
-        widget.GPSLONG = LongValue
+      if widget.GPSLAT ~= Lat_Value or widget.GPSLONG ~= Long_Value then
+        widget.GPSLAT = Lat_Value
+        widget.GPSLONG = Long_Value
         lcd.invalidate()
       end
       if GPSState == false then
@@ -1057,6 +1108,8 @@ local function wakeup(widget)
       end
     end
     
+    -- Checks if widget.SpeedSource is available, Then store its value in widget.SPEED
+    -- Also gets unit from widget.SpeedSource, Then store its value in widget.SPEED_UNIT
     if widget.SpeedSource then
       local SpeedValue = widget.SpeedSource:value()
       local SpeedUnit = widget.SpeedSource:unit()
@@ -1070,6 +1123,8 @@ local function wakeup(widget)
       end
     end
     
+    -- Checks if widget.AltitudeSource is available, Then store its value in widget.ALTITUDE
+    -- Also gets unit from widget.AltitudeSource, Then store its value in widget.ALTITUDE_UNIT    
     if widget.AltitudeSource then
       local AltitudeValue = widget.AltitudeSource:value()
       local AltitudeUnit = widget.AltitudeSource:unit()
@@ -1083,6 +1138,7 @@ local function wakeup(widget)
       end      
     end   
     
+    -- Checks if widget.CourseSource is available, Then store its value in widget.COURSE    
     if widget.CourseSource then
       local CourseValue = widget.CourseSource:value()
       if widget.COURSE ~= CourseValue then
@@ -1090,7 +1146,9 @@ local function wakeup(widget)
         lcd.invalidate()
       end
     end     
-   
+  
+    -- Checks if widget.RSSISource is available, Then store its value in widget.RSSI  
+    -- Also checks if the values are valid by checking its state. Used with "NO GPS AVAILABLE"    
     if widget.RSSISource then
       local RSSIValue = widget.RSSISource:value()
       local RSSIState = widget.RSSISource:state()
@@ -1103,28 +1161,37 @@ local function wakeup(widget)
       end
     end   
     
-    if widget.LatSource then
-        local newValue = widget.LatSource:value()
-        if widget.LatSource ~= newValue then
-            widget.LatValue = newValue
+    -- Checks if widget.SimLatSource is available, Then store its value in widget.SimLatValue  
+    -- These are used for Stick GPS Simulation
+    if widget.SimLatSource then
+        local newValue = widget.SimLatSource:value()
+        if widget.SimLatSource ~= newValue then
+            widget.SimLatValue = newValue
             lcd.invalidate()
         end
     end    
-    
-    if widget.LongSource then
-        local newValue = widget.LongSource:value()
-        if widget.LongSource ~= newValue then
-            widget.LongValue = newValue
+ 
+    -- Checks if widget.SimLongSource is available, Then store its value in widget.SimLongValue    
+    -- These are used for Stick GPS Simulation    
+    if widget.SimLongSource then
+        local newValue = widget.SimLongSource:value()
+        if widget.SimLongSource ~= newValue then
+            widget.SimLongValue = newValue
             lcd.invalidate()
         end
     end      
     
 end
 
+
+------------------------------------------------------------------------------------------------
+-- Widget Configuration options
+------------------------------------------------------------------------------------------------
 local function configure(widget)
  
+ -- Gets the Map Names
  dofile("/scripts/h4lgpsmap/maps/mapnames.lua")
- 
+  
  local Map1 = Map_name_1
  local Map2 = Map_name_2
  local Map3 = Map_name_3
@@ -1140,7 +1207,7 @@ local function configure(widget)
  
   -- Units
     line = form.addLine("Units")
-    local field_units = form.addChoiceField(line, form.getFieldSlots(line)[0], {{"Metric", 0}, {"Imperial", 1}}, function() return widget.unit end, function(value) widget.unit = value end)    
+    local field_units = form.addChoiceField(line, form.getFieldSlots(line)[0], {{"Metric", 0}, {"Imperial", 1}}, function() return widget.UNIT end, function(value) widget.UNIT = value end)    
  
   -- GPS Source
     line = form.addLine("GPS Source")
@@ -1215,18 +1282,22 @@ local function configure(widget)
     
         -- Source choice
     line = form.addLine("Latitude Source Stick")
-    widget.field_latSource = form.addSourceField(line, nil, function() return widget.LatSource end, function(value) widget.LatSource = value end)
+    widget.field_latSource = form.addSourceField(line, nil, function() return widget.SimLatSource end, function(value) widget.SimLatSource = value end)
     widget.field_latSource:enable(widget.StickSim)
     
         -- Source choice
     line = form.addLine("Longitude Source Stick")
-    widget.field_longSource = form.addSourceField(line, nil, function() return widget.LongSource end, function(value) widget.LongSource = value end)
+    widget.field_longSource = form.addSourceField(line, nil, function() return widget.SimLongSource end, function(value) widget.SimLongSource = value end)
     widget.field_longSource:enable(widget.StickSim) 
  
 
  
 end
 
+
+------------------------------------------------------------------------------------------------
+-- Widget Storage - Reads all configured parameters
+------------------------------------------------------------------------------------------------
 local function read(widget)
     widget.GPSSource                    = storage.read("GPS_Source")
     widget.SpeedSource                  = storage.read("Speed_Source")
@@ -1234,7 +1305,7 @@ local function read(widget)
     widget.CourseSource                 = storage.read("Course_Source")
     widget.ResetSource                  = storage.read("Reset_Source")
     widget.RSSISource                   = storage.read("RSSI_Source")
-    widget.unit                         = storage.read("Unit")
+    widget.UNIT                         = storage.read("Unit")
     widget.GPS_Annotation               = storage.read("GPS_Annotation")
     widget.ArrowColor                   = storage.read("ArrowColor")
     widget.HUD_Text_Color               = storage.read("HUD_Text_Color")
@@ -1243,11 +1314,14 @@ local function read(widget)
     widget.Calculate_Bearing            = storage.read("Calculate_Bearing")
     widget.Update_Distance              = storage.read("Update_Distance")
     widget.Map_Select                   = storage.read("Map_Select")
-    widget.LatSource                    = storage.read("Lat_Source")
-    widget.LongSource                   = storage.read("Long_Source")
+    widget.SimLatSource                 = storage.read("Lat_Source")
+    widget.SimLongSource                = storage.read("Long_Source")
     widget.StickSim                     = storage.read("StickSim")    
 end
 
+------------------------------------------------------------------------------------------------
+-- Widget Storage - Writes all configured parameters
+------------------------------------------------------------------------------------------------
 local function write(widget)    
     storage.write("GPS_Source"          , widget.GPSSource)
     storage.write("Speed_Source"        , widget.SpeedSource)
@@ -1255,7 +1329,7 @@ local function write(widget)
     storage.write("Course_Source"       , widget.CourseSource)
     storage.write("Reset_Source"        , widget.ResetSource)
     storage.write("RSSI_Source"         , widget.RSSISource)
-    storage.write("Unit"                , widget.unit)
+    storage.write("Unit"                , widget.UNIT)
     storage.write("GPS_Annotation"      , widget.GPS_Annotation)    
     storage.write("ArrowColor"          , widget.ArrowColor)
     storage.write("HUD_Text_Color"      , widget.HUD_Text_Color)
@@ -1264,12 +1338,15 @@ local function write(widget)
     storage.write("Calculate_Bearing"   , widget.Calculate_Bearing)
     storage.write("Update_Distance"     , widget.Update_Distance)
     storage.write("Map_Select"          , widget.Map_Select)
-    storage.write("Lat_Source"          , widget.LatSource)
-    storage.write("Long_Source"         , widget.LongSource)
+    storage.write("Lat_Source"          , widget.SimLatSource)
+    storage.write("Long_Source"         , widget.SimLongSource)
     storage.write("StickSim"            , widget.StickSim)    
 
 end
 
+------------------------------------------------------------------------------------------------
+-- Widget Initialisation
+------------------------------------------------------------------------------------------------
 local function init()
     Windsock = lcd.loadBitmap("/scripts/h4lgpsmap/images/Windsock.png")
     system.registerWidget({key="gps", name=name, create=create, paint=paint, wakeup=wakeup, configure=configure, read=read, write=write})

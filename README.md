@@ -11,6 +11,12 @@ This widget can be used with ETHOS v1.1.0 and higher, and is compatible with Hor
 
 #### Changes:
 
+###### v1.06
+
+- minor fix Coordinate readout
+- Multiple H4LGPSMAP widgets loaded caused interaction, fixed
+- Big cleanup of script, lot of commenting done to understand the script.
+
 ###### v1.05
 
 - Map measurement indicator moved
