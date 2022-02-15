@@ -65,8 +65,8 @@ local function create()
             CourseSource            = nil,    -- Configuration, Course Source input
             COURSE                  = 0,      -- Configuration, Course value from CourseSource
             StickSim                = false,  -- Configuration, True = Stick GPS simulation on, False = off
-            SimLatSource            = 0,      -- Configuration, Simulator Latitude Source input
-            SimLongSource           = 0,      -- Configuration, Simulator Longitude Source input
+            SimLatSource            = nil,    -- Configuration, Simulator Latitude Source input
+            SimLongSource           = nil,    -- Configuration, Simulator Longitude Source input
             SimLatValue             = 0,      -- Configuration, Simulator Lattiude value from SimLatSource
             SimLongValue            = 0,      -- Configuration, Simulator Lattiude value from SimLongSource
             RSSISource              = nil,    -- Configuration, RSSI Source input
@@ -91,7 +91,6 @@ local function create()
             MapSouth                = 0,      -- Widget wide Map Bottomside Image coordinate
             MapWest                 = 0,      -- Widget wide Map Westside Image coordinate
             MapEast                 = 0,      -- Widget wide Map Eastside Image coordinate
-            PlaneVisible            = false,  -- Widget wide Flag, uses of plane is inside or outside map visibility
             NS                      = "",     -- Widget wide North or South string
             EW                      = "",     -- Widget wide East or West string
             SPD                     = "",     -- Widget wide Speed unit
@@ -100,6 +99,7 @@ local function create()
             ForceHome               = false,  -- Widget wide Flag to Force Homing
             HomeSet                 = false,  -- Widget wide Flag if Home is set or not            
             Draw_LCD                = false,  -- Widget wide Flag used in functions that have draw functions
+            PlaneVisible            = false,  -- Widget wide Flag, uses of plane is inside or outside map visibility            
             }
 end
 
