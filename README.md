@@ -9,6 +9,8 @@ This widget can be used with ETHOS v1.1.0 and higher, and is compatible with Hor
 
 ------
 
+Download: https://github.com/Hobby4life/H4LGPSMAP/releases/download/v1.0.6/h4lgpsmap.zip
+
 #### Changes:
 
 ###### v1.06
