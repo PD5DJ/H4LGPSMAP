@@ -1,5 +1,7 @@
 # H4LGPSMAP
  Hobby4life ETHOS GPS Map Widget
+ 
+ ## SUPPORT DISCONTINUED!
 
 ------
 
